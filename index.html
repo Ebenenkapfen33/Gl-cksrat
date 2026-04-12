@@ -2,86 +2,124 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Bingo Glücksrad - Silben Edition</title>
+    <title>Bingo Glücksrad - Kinder Edition</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #ffffff;
+            /* Kinderfreundlicher Verlauf */
+            background: linear-gradient(135deg, #e0f7fa 0%, #fce4ec 100%);
             margin: 0;
+            min-height: 100vh;
+            padding-top: 20px;
         }
 
-        /* Das ausgewählte Wort ganz groß oben */
+        /* Die schwarze Box für das Ergebnis mit buntem Rand */
+        #result-container {
+            background-color: #1a1a1a;
+            width: 90%;
+            max-width: 800px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 160px;
+            margin-bottom: 20px;
+            border: 8px solid #ffeb3b; /* Gelber Rahmen für Freundlichkeit */
+            border-radius: 30px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
         #result-display {
-            height: 120px;
-            font-size: 80px;
+            font-size: 85px;
             font-weight: bold;
-            margin: 20px 0;
             text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
         }
 
         #wheel-container {
             position: relative;
             margin-bottom: 30px;
+            padding: 15px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
         }
 
+        /* Lustigerer Zeiger */
         #arrow {
             position: absolute;
-            top: -20px;
+            top: -10px;
             left: 50%;
             transform: translateX(-50%);
             width: 0; height: 0; 
-            border-left: 25px solid transparent;
-            border-right: 25px solid transparent;
-            border-top: 45px solid black;
+            border-left: 35px solid transparent;
+            border-right: 35px solid transparent;
+            border-top: 55px solid #ff5722; 
             z-index: 10;
+            filter: drop-shadow(0 4px 2px rgba(0,0,0,0.2));
         }
 
         canvas {
-            border: 10px solid black; /* Schwarze Umrandung */
+            border: 10px solid #444;
             border-radius: 50%;
             transition: transform 20s cubic-bezier(0.15, 0, 0.15, 1);
         }
 
         .controls {
-            background: #f0f0f0;
-            padding: 15px;
-            border: 2px solid black;
-            border-radius: 10px;
-            width: 90%;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 25px;
+            border: 4px solid #81c784;
+            border-radius: 25px;
+            width: 85%;
             max-width: 600px;
             text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 40px;
         }
 
         textarea {
             width: 90%;
-            height: 80px;
+            height: 90px;
             font-size: 20px;
+            border: 2px solid #ccc;
+            border-radius: 15px;
+            padding: 10px;
+            outline: none;
         }
 
-        /* Silben-Farben für die Anzeige oben */
-        .syl-blue { color: #0000FF; }
-        .syl-red { color: #FF0000; }
+        /* Silben-Farben auf schwarzem Grund */
+        .syl-blue { color: #64b5f6; } /* Helles freundliches Blau */
+        .syl-red { color: #ff8a80; }  /* Sanftes helles Rot */
+        .waiting { color: #ffffff; font-size: 35px; opacity: 0.7; }
+
+        h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
+        kbd { background: #333; color: white; padding: 3px 8px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
-    <div id="result-display">DRÜCKE LEERTASTE</div>
+    <div id="result-container">
+        <div id="result-display" class="waiting">BEREIT FÜR BINGO?</div>
+    </div>
 
     <div id="wheel-container">
         <div id="arrow"></div>
-        <canvas id="wheel" width="600" height="600"></canvas>
+        <canvas id="wheel" width="550" height="550"></canvas>
     </div>
 
     <div class="controls">
-        <p>Wörter mit Bindestrich trennen: <b>Hu-pe</b>, <b>Am-pel</b></p>
-        <textarea id="wordsInput">Pa-pa
-O-ma
-Au-to
-Schu-le
-Win-ter</textarea>
+        <h1>Glücksrad Einstellungen</h1>
+        <p>Wörter mit Bindestrich (z.B. <b>Ki-wi</b>):</p>
+        <textarea id="wordsInput">Pi-rat
+Schoko-la-de
+Fuß-ball
+Ap-fel
+Son-ne
+Ha-se</textarea>
+        <p>Drücke die <kbd>Leertaste</kbd> zum Drehen!</p>
     </div>
 
     <script>
@@ -96,38 +134,39 @@ Win-ter</textarea>
 
         function drawWheel() {
             segments = input.value.split('\n').filter(s => s.trim() !== "");
+            if (segments.length === 0) return;
+            
             const angleStep = (Math.PI * 2) / segments.length;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             segments.forEach((word, i) => {
                 const angle = i * angleStep;
                 
-                // 1. Feld zeichnen (Weiß mit schwarzem Rand)
+                // Segment
                 ctx.beginPath();
-                ctx.fillStyle = "white";
-                ctx.moveTo(300, 300);
-                ctx.arc(300, 300, 300, angle, angle + angleStep);
+                ctx.fillStyle = "#ffffff";
+                ctx.moveTo(275, 275);
+                ctx.arc(275, 275, 275, angle, angle + angleStep);
                 ctx.fill();
                 ctx.lineWidth = 3;
-                ctx.strokeStyle = "black";
+                ctx.strokeStyle = "#333333";
                 ctx.stroke();
 
-                // 2. Text mit farbigen Silben ins Rad malen
+                // Silben im Rad
                 ctx.save();
-                ctx.translate(300, 300);
+                ctx.translate(275, 275);
                 ctx.rotate(angle + angleStep / 2);
-                ctx.font = "bold 28px Arial";
+                ctx.font = "bold 22px Arial";
                 
                 const parts = word.split('-');
-                let currentX = 280; // Startposition vom Rand aus
+                let currentX = 250; 
 
-                // Wir schreiben rückwärts vom Rand zur Mitte
                 for (let j = parts.length - 1; j >= 0; j--) {
-                    ctx.fillStyle = (j % 2 === 0) ? "blue" : "red";
+                    ctx.fillStyle = (j % 2 === 0) ? "#1e88e5" : "#e53935"; // Kräftiges Blau/Rot im Rad
                     const text = parts[j];
                     ctx.textAlign = "right";
-                    ctx.fillText(text, currentX, 10);
-                    currentX -= ctx.measureText(text).width + 5; // Abstand zur nächsten Silbe
+                    ctx.fillText(text, currentX, 8);
+                    currentX -= ctx.measureText(text).width + 4;
                 }
                 ctx.restore();
             });
@@ -136,9 +175,12 @@ Win-ter</textarea>
         function spin() {
             if (isSpinning) return;
             isSpinning = true;
-            resultDiv.innerHTML = "???";
             
-            const extraDegrees = 3600 + Math.floor(Math.random() * 360); 
+            resultDiv.className = "waiting";
+            resultDiv.innerHTML = "DAS RAD SAUST...";
+            
+            // Ordentlich Schwung für 20 Sek
+            const extraDegrees = 4500 + Math.floor(Math.random() * 1000); 
             currentRotation += extraDegrees;
             canvas.style.transform = `rotate(${currentRotation}deg)`;
 
@@ -148,13 +190,14 @@ Win-ter</textarea>
                 const segmentAngle = 360 / segments.length;
                 const winningIndex = Math.floor(((360 - actualRotation + 270) % 360) / segmentAngle);
                 
-                // Gewinner-Wort oben farbig anzeigen
                 const word = segments[winningIndex];
                 const parts = word.split('-');
+                
+                resultDiv.className = "";
                 resultDiv.innerHTML = parts.map((p, i) => 
                     `<span class="${i % 2 === 0 ? 'syl-blue' : 'syl-red'}">${p}</span>`
                 ).join('');
-            }, 20000); // Exakt 20 Sekunden Verzögerung
+            }, 20000);
         }
 
         input.addEventListener('input', drawWheel);
@@ -169,5 +212,3 @@ Win-ter</textarea>
     </script>
 </body>
 </html>
-
-
