@@ -2,94 +2,101 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glücksrad Test</title>
+    <title>Bingo Glücksrad - Ausbildung</title>
     <style>
         body {
-            font-family: sans-serif;
+            font-family: 'Comic Sans MS', sans-serif; /* Oft besser lesbar für Kinder */
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #f0f2f5;
-            margin: 20px;
+            background-color: #f9f9f9;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Ergebnisanzeige oben */
+        #result-display {
+            height: 100px;
+            font-size: 60px;
+            font-weight: bold;
+            margin-top: 20px;
+            text-align: center;
+            color: #333;
         }
 
         #wheel-container {
             position: relative;
-            margin: 20px;
+            margin: 30px;
         }
 
-        /* Der Zeiger oben */
         #arrow {
             position: absolute;
-            top: -10px;
+            top: -15px;
             left: 50%;
             transform: translateX(-50%);
-            width: 0; 
-            height: 0; 
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-top: 30px solid #e74c3c;
+            width: 0; height: 0; 
+            border-left: 25px solid transparent;
+            border-right: 25px solid transparent;
+            border-top: 40px solid #000;
             z-index: 10;
         }
 
         canvas {
-            border: 5px solid #333;
+            border: 8px solid #000; /* Schwarze Umrandung des Rades */
             border-radius: 50%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
-        }
-
-        textarea {
-            width: 300px;
-            height: 100px;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
+            transition: transform 20s cubic-bezier(0.1, 0, 0.1, 1); /* 20 Sek. Verzögerung */
         }
 
         .controls {
-            text-align: center;
-            margin-top: 20px;
+            background: #eee;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #000;
+            width: 80%;
+            max-width: 500px;
         }
 
-        kbd {
-            background: #eee;
-            border-radius: 3px;
-            border: 1px solid #b4b4b4;
-            padding: 2px 4px;
+        textarea {
+            width: 100%;
+            height: 80px;
+            font-size: 18px;
+            margin-bottom: 10px;
         }
+
+        /* Silben-Farben */
+        .syl-1 { color: blue; }
+        .syl-2 { color: red; }
     </style>
 </head>
 <body>
 
-    <h2>Glücksrad Test</h2>
-    <p>Drücke <kbd>Leertaste</kbd> zum Drehen!</p>
+    <div id="result-display"></div>
 
     <div id="wheel-container">
         <div id="arrow"></div>
-        <canvas id="wheel" width="400" height="400"></canvas>
+        <canvas id="wheel" width="500" height="500"></canvas>
     </div>
 
     <div class="controls">
-        <p>Wörter hier eingeben (pro Zeile eins):</p>
-        <textarea id="wordsInput">Pizza
-Pasta
-Salat
-Döner
-Sushi</textarea>
+        <p>Wörter mit Bindestrich trennen (z.B. Hun-der-te):</p>
+        <textarea id="wordsInput">Ap-fel
+Bi-ne
+Do-se
+E-sel
+Fen-ster</textarea>
+        <p><small>Leertaste zum Drehen. (Die Drehung dauert 20s)</small></p>
     </div>
 
     <script>
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
         const input = document.getElementById('wordsInput');
+        const resultDiv = document.getElementById('result-display');
         
         let segments = [];
         let currentRotation = 0;
         let isSpinning = false;
 
-        // Zeichnet das Rad basierend auf dem Textfeld
         function drawWheel() {
             segments = input.value.split('\n').filter(s => s.trim() !== "");
             if (segments.length === 0) return;
@@ -100,58 +107,78 @@ Sushi</textarea>
             segments.forEach((text, i) => {
                 const angle = i * angleStep;
                 
-                // Segment zeichnen
+                // Segment-Hintergrund
                 ctx.beginPath();
-                ctx.fillStyle = `hsl(${i * (360 / segments.length)}, 70%, 60%)`;
-                ctx.moveTo(200, 200);
-                ctx.arc(200, 200, 200, angle, angle + angleStep);
-                ctx.lineTo(200, 200);
+                ctx.fillStyle = "#fff";
+                ctx.moveTo(250, 250);
+                ctx.arc(250, 250, 250, angle, angle + angleStep);
                 ctx.fill();
+                
+                // Schwarzer Rand für jedes Feld
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "#000";
                 ctx.stroke();
 
-                // Text zeichnen
+                // Text zeichnen (Silben-Logik für das Rad)
                 ctx.save();
-                ctx.translate(200, 200);
+                ctx.translate(250, 250);
                 ctx.rotate(angle + angleStep / 2);
                 ctx.textAlign = "right";
-                ctx.fillStyle = "white";
-                ctx.font = "bold 18px Arial";
-                ctx.fillText(text, 180, 10);
+                ctx.font = "bold 24px Arial";
+                
+                // Wir entfernen die Striche für das Rad, damit es sauber aussieht
+                ctx.fillStyle = "#000";
+                ctx.fillText(text.replace(/-/g, ""), 230, 10);
                 ctx.restore();
             });
         }
 
-        // Die Dreh-Logik
         function spin() {
             if (isSpinning) return;
             
             isSpinning = true;
-            const extraDegrees = Math.floor(Math.random() * 360) + 1440; // Mind. 4 Umdrehungen
+            resultDiv.innerHTML = "???"; // Spannung erzeugen
+            
+            const extraDegrees = Math.floor(Math.random() * 360) + 3600; // Viele Umdrehungen für 20s
             currentRotation += extraDegrees;
             
             canvas.style.transform = `rotate(${currentRotation}deg)`;
 
-            // Nach der Animation (4s) wieder freigeben
             setTimeout(() => {
                 isSpinning = false;
-            }, 4000);
+                showWinner();
+            }, 20000); // 20 Sekunden warten
         }
 
-        // Event Listener
+        function showWinner() {
+            // Berechnen welches Segment oben ist
+            const actualRotation = currentRotation % 360;
+            const segmentAngle = 360 / segments.length;
+            // Der Zeiger ist oben (270 Grad im Canvas-System)
+            const winningIndex = Math.floor(((360 - actualRotation + 270) % 360) / segmentAngle);
+            const word = segments[winningIndex];
+
+            // Silben farbig darstellen
+            const parts = word.split('-');
+            let coloredWord = "";
+            parts.forEach((part, index) => {
+                const colorClass = (index % 2 === 0) ? 'syl-1' : 'syl-2';
+                coloredWord += `<span class="${colorClass}">${part}</span>`;
+            });
+
+            resultDiv.innerHTML = coloredWord;
+        }
+
         input.addEventListener('input', drawWheel);
-        
         window.addEventListener('keydown', (e) => {
-            if (e.code === "Space") {
-                // Verhindert Scrollen beim Drücken der Leertaste
-                if (document.activeElement !== input) {
-                    e.preventDefault();
-                    spin();
-                }
+            if (e.code === "Space" && document.activeElement !== input) {
+                e.preventDefault();
+                spin();
             }
         });
 
-        // Initiales Zeichnen
         drawWheel();
     </script>
 </body>
 </html>
+
