@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glücksrad Test</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f2f5;
+            margin: 20px;
+        }
+
+        #wheel-container {
+            position: relative;
+            margin: 20px;
+        }
+
+        /* Der Zeiger oben */
+        #arrow {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; 
+            height: 0; 
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 30px solid #e74c3c;
+            z-index: 10;
+        }
+
+        canvas {
+            border: 5px solid #333;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+        }
+
+        textarea {
+            width: 300px;
+            height: 100px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        kbd {
+            background: #eee;
+            border-radius: 3px;
+            border: 1px solid #b4b4b4;
+            padding: 2px 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Glücksrad Test</h2>
+    <p>Drücke <kbd>Leertaste</kbd> zum Drehen!</p>
+
+    <div id="wheel-container">
+        <div id="arrow"></div>
+        <canvas id="wheel" width="400" height="400"></canvas>
+    </div>
+
+    <div class="controls">
+        <p>Wörter hier eingeben (pro Zeile eins):</p>
+        <textarea id="wordsInput">Pizza
+Pasta
+Salat
+Döner
+Sushi</textarea>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        const input = document.getElementById('wordsInput');
+        
+        let segments = [];
+        let currentRotation = 0;
+        let isSpinning = false;
+
+        // Zeichnet das Rad basierend auf dem Textfeld
+        function drawWheel() {
+            segments = input.value.split('\n').filter(s => s.trim() !== "");
+            if (segments.length === 0) return;
+
+            const angleStep = (Math.PI * 2) / segments.length;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            segments.forEach((text, i) => {
+                const angle = i * angleStep;
+                
+                // Segment zeichnen
+                ctx.beginPath();
+                ctx.fillStyle = `hsl(${i * (360 / segments.length)}, 70%, 60%)`;
+                ctx.moveTo(200, 200);
+                ctx.arc(200, 200, 200, angle, angle + angleStep);
+                ctx.lineTo(200, 200);
+                ctx.fill();
+                ctx.stroke();
+
+                // Text zeichnen
+                ctx.save();
+                ctx.translate(200, 200);
+                ctx.rotate(angle + angleStep / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "white";
+                ctx.font = "bold 18px Arial";
+                ctx.fillText(text, 180, 10);
+                ctx.restore();
+            });
+        }
+
+        // Die Dreh-Logik
+        function spin() {
+            if (isSpinning) return;
+            
+            isSpinning = true;
+            const extraDegrees = Math.floor(Math.random() * 360) + 1440; // Mind. 4 Umdrehungen
+            currentRotation += extraDegrees;
+            
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+            // Nach der Animation (4s) wieder freigeben
+            setTimeout(() => {
+                isSpinning = false;
+            }, 4000);
+        }
+
+        // Event Listener
+        input.addEventListener('input', drawWheel);
+        
+        window.addEventListener('keydown', (e) => {
+            if (e.code === "Space") {
+                // Verhindert Scrollen beim Drücken der Leertaste
+                if (document.activeElement !== input) {
+                    e.preventDefault();
+                    spin();
+                }
+            }
+        });
+
+        // Initiales Zeichnen
+        drawWheel();
+    </script>
+</body>
+</html>
