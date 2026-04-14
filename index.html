@@ -2,124 +2,146 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Bingo Glücksrad - Kinder Edition</title>
+    <title>Bingo Glücksrad - Manuelle Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         body {
-            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            font-family: 'Comic Sans MS', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* Kinderfreundlicher Verlauf */
             background: linear-gradient(135deg, #e0f7fa 0%, #fce4ec 100%);
             margin: 0;
             min-height: 100vh;
-            padding-top: 20px;
+            padding: 10px;
         }
 
-        /* Die schwarze Box für das Ergebnis mit buntem Rand */
+        /* Schwarze Box für das Wort */
         #result-container {
             background-color: #1a1a1a;
-            width: 90%;
+            width: 95%;
             max-width: 800px;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 160px;
-            margin-bottom: 20px;
-            border: 8px solid #ffeb3b; /* Gelber Rahmen für Freundlichkeit */
+            height: 140px;
+            margin-bottom: 15px;
+            border: 8px solid #ffeb3b;
             border-radius: 30px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
 
         #result-display {
-            font-size: 85px;
+            font-size: 80px;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 3px;
-            text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
         }
 
         #wheel-container {
             position: relative;
-            margin-bottom: 30px;
-            padding: 15px;
+            margin-bottom: 20px;
             background: white;
             border-radius: 50%;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
-        /* Lustigerer Zeiger */
         #arrow {
             position: absolute;
             top: -10px;
             left: 50%;
             transform: translateX(-50%);
             width: 0; height: 0; 
-            border-left: 35px solid transparent;
-            border-right: 35px solid transparent;
-            border-top: 55px solid #ff5722; 
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-top: 50px solid #ff5722; 
             z-index: 10;
-            filter: drop-shadow(0 4px 2px rgba(0,0,0,0.2));
         }
 
         canvas {
             border: 10px solid #444;
             border-radius: 50%;
-            transition: transform 20s cubic-bezier(0.15, 0, 0.15, 1);
+            transition: transform 10s cubic-bezier(0.15, 0, 0.15, 1);
         }
 
         .controls {
             background: rgba(255, 255, 255, 0.9);
-            padding: 25px;
-            border: 4px solid #81c784;
+            padding: 20px;
             border-radius: 25px;
-            width: 85%;
+            width: 90%;
             max-width: 600px;
             text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            margin-bottom: 40px;
+            border: 3px solid #81c784;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 15px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 12px;
+            border: 2px solid #333;
+            background: white;
+            transition: 0.2s;
+        }
+
+        button.active {
+            background: #ffeb3b;
+            border-color: #fbc02d;
+            transform: scale(1.1);
+        }
+
+        .confetti-btn {
+            background: #e91e63;
+            color: white;
+            border: none;
+            font-weight: bold;
         }
 
         textarea {
             width: 90%;
-            height: 90px;
-            font-size: 20px;
-            border: 2px solid #ccc;
-            border-radius: 15px;
-            padding: 10px;
-            outline: none;
+            height: 60px;
+            font-size: 18px;
+            margin-top: 10px;
+            border-radius: 10px;
         }
 
-        /* Silben-Farben auf schwarzem Grund */
-        .syl-blue { color: #64b5f6; } /* Helles freundliches Blau */
-        .syl-red { color: #ff8a80; }  /* Sanftes helles Rot */
-        .waiting { color: #ffffff; font-size: 35px; opacity: 0.7; }
-
-        h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
-        kbd { background: #333; color: white; padding: 3px 8px; border-radius: 5px; }
+        .syl-blue { color: #64b5f6; }
+        .syl-red { color: #ff8a80; }
+        .waiting { color: white; font-size: 30px; opacity: 0.6; }
     </style>
 </head>
 <body>
 
     <div id="result-container">
-        <div id="result-display" class="waiting">BEREIT FÜR BINGO?</div>
+        <div id="result-display" class="waiting">BEREIT?</div>
     </div>
 
     <div id="wheel-container">
         <div id="arrow"></div>
-        <canvas id="wheel" width="550" height="550"></canvas>
+        <canvas id="wheel" width="500" height="500"></canvas>
     </div>
 
     <div class="controls">
-        <h1>Glücksrad Einstellungen</h1>
-        <p>Wörter mit Bindestrich (z.B. <b>Ki-wi</b>):</p>
+        <div class="button-group">
+            <button id="btn-slow" onclick="setSpeed(15, 'btn-slow')">🐢 15s</button>
+            <button id="btn-med" class="active" onclick="setSpeed(10, 'btn-med')">🐰 10s</button>
+            <button id="btn-fast" onclick="setSpeed(5, 'btn-fast')">🐎 5s</button>
+            <button class="confetti-btn" onclick="celebrate()">🎉 KONFETTI</button>
+        </div>
+        
         <textarea id="wordsInput">Pi-rat
 Schoko-la-de
 Fuß-ball
 Ap-fel
-Son-ne
-Ha-se</textarea>
-        <p>Drücke die <kbd>Leertaste</kbd> zum Drehen!</p>
+Son-ne</textarea>
     </div>
 
     <script>
@@ -131,42 +153,51 @@ Ha-se</textarea>
         let segments = [];
         let currentRotation = 0;
         let isSpinning = false;
+        let spinDuration = 10;
+
+        function setSpeed(seconds, btnId) {
+            spinDuration = seconds;
+            canvas.style.transition = `transform ${seconds}s cubic-bezier(0.15, 0, 0.15, 1)`;
+            document.querySelectorAll('.button-group button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(btnId).classList.add('active');
+        }
+
+        function celebrate() {
+            confetti({
+                particleCount: 200,
+                spread: 100,
+                origin: { y: 0.6 }
+            });
+        }
 
         function drawWheel() {
             segments = input.value.split('\n').filter(s => s.trim() !== "");
             if (segments.length === 0) return;
-            
             const angleStep = (Math.PI * 2) / segments.length;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             segments.forEach((word, i) => {
                 const angle = i * angleStep;
-                
-                // Segment
                 ctx.beginPath();
-                ctx.fillStyle = "#ffffff";
-                ctx.moveTo(275, 275);
-                ctx.arc(275, 275, 275, angle, angle + angleStep);
+                ctx.fillStyle = "white";
+                ctx.moveTo(250, 250);
+                ctx.arc(250, 250, 250, angle, angle + angleStep);
                 ctx.fill();
+                ctx.strokeStyle = "#000";
                 ctx.lineWidth = 3;
-                ctx.strokeStyle = "#333333";
                 ctx.stroke();
 
-                // Silben im Rad
                 ctx.save();
-                ctx.translate(275, 275);
+                ctx.translate(250, 250);
                 ctx.rotate(angle + angleStep / 2);
-                ctx.font = "bold 22px Arial";
-                
+                ctx.font = "bold 20px Arial";
                 const parts = word.split('-');
-                let currentX = 250; 
-
+                let currentX = 230; 
                 for (let j = parts.length - 1; j >= 0; j--) {
-                    ctx.fillStyle = (j % 2 === 0) ? "#1e88e5" : "#e53935"; // Kräftiges Blau/Rot im Rad
-                    const text = parts[j];
+                    ctx.fillStyle = (j % 2 === 0) ? "blue" : "red";
                     ctx.textAlign = "right";
-                    ctx.fillText(text, currentX, 8);
-                    currentX -= ctx.measureText(text).width + 4;
+                    ctx.fillText(parts[j], currentX, 8);
+                    currentX -= ctx.measureText(parts[j]).width + 5;
                 }
                 ctx.restore();
             });
@@ -175,12 +206,10 @@ Ha-se</textarea>
         function spin() {
             if (isSpinning) return;
             isSpinning = true;
-            
             resultDiv.className = "waiting";
             resultDiv.innerHTML = "DAS RAD SAUST...";
             
-            // Ordentlich Schwung für 20 Sek
-            const extraDegrees = 4500 + Math.floor(Math.random() * 1000); 
+            const extraDegrees = 3000 + Math.floor(Math.random() * 1000); 
             currentRotation += extraDegrees;
             canvas.style.transform = `rotate(${currentRotation}deg)`;
 
@@ -192,12 +221,11 @@ Ha-se</textarea>
                 
                 const word = segments[winningIndex];
                 const parts = word.split('-');
-                
                 resultDiv.className = "";
                 resultDiv.innerHTML = parts.map((p, i) => 
                     `<span class="${i % 2 === 0 ? 'syl-blue' : 'syl-red'}">${p}</span>`
                 ).join('');
-            }, 20000);
+            }, spinDuration * 1000);
         }
 
         input.addEventListener('input', drawWheel);
